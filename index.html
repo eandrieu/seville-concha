@@ -7,253 +7,318 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Georgia, 'Times New Roman', serif; background: #fdf8f2; color: #2c1a0e; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Georgia,'Times New Roman',serif;background:#fdf8f2;color:#2c1a0e;font-size:15px}
+header{background:#8b2500;color:#fdf0e0;padding:16px 20px 12px}
+header h1{font-size:21px;font-weight:normal;letter-spacing:.04em}
+header p{font-size:12px;color:#f5c89a;margin-top:3px;font-family:Arial,sans-serif}
+#map{height:58vw;max-height:440px;width:100%;transition:max-height .3s ease}
+#map.expanded{max-height:85vh}
+.legend{display:flex;flex-wrap:wrap;gap:8px;padding:9px 14px;background:#fff;border-bottom:1px solid #ecdcc8;font-family:Arial,sans-serif;font-size:12px}
+.li{display:flex;align-items:center;gap:5px;color:#5a3c28}
+.ld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
-  header { background: #8b2500; color: #fdf0e0; padding: 18px 20px 14px; }
-  header h1 { font-size: 22px; font-weight: normal; letter-spacing: 0.04em; }
-  header p { font-size: 13px; color: #f5c89a; margin-top: 4px; font-family: Arial, sans-serif; }
+/* geo button */
+.map-wrap{position:relative}
+.geo-btn{position:absolute;bottom:80px;right:10px;z-index:1000;width:34px;height:34px;background:#fff;border:2px solid rgba(0,0,0,.25);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.2)}
 
-  #map { height: 55vw; max-height: 420px; width: 100%; }
+/* toggle list button */
+.toggle-bar{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;background:#fff;border-bottom:1px solid #ecdcc8;cursor:pointer;font-family:Arial,sans-serif;font-size:13px;color:#8b2500;font-weight:bold;user-select:none;-webkit-tap-highlight-color:rgba(139,37,0,.08)}
+.toggle-bar:active{background:#fdf0e8}
+.toggle-arrow{font-size:11px;transition:transform .25s ease}
+.toggle-arrow.up{transform:rotate(180deg)}
+#list-section{transition:opacity .2s ease}
+#list-section.hidden{display:none}
 
-  nav { display: flex; background: #fff; border-bottom: 1px solid #e8d8c4; overflow-x: auto; }
-  nav button { flex: 1; min-width: 80px; padding: 12px 8px; border: none; background: none; font-size: 13px; font-family: Arial, sans-serif; color: #7a5c3a; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
-  nav button.active { color: #8b2500; border-bottom-color: #8b2500; font-weight: bold; }
+/* popup — entire popup is the link */
+.popup-link{display:block;text-decoration:none;color:inherit;min-width:180px}
+.lf-popup-name{font-weight:bold;font-size:14px;font-family:Arial,sans-serif;color:#2c1a0e}
+.lf-popup-cat{font-size:12px;color:#7a5c3a;font-family:Arial,sans-serif;margin:2px 0 3px}
+.lf-popup-note{font-size:12px;color:#b05000;font-family:Arial,sans-serif;font-style:italic;margin-bottom:4px}
+.lf-popup-cta{font-family:Arial,sans-serif;font-size:12px;color:#8b2500;font-weight:bold;margin-top:4px}
 
-  .panel { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
-  .panel.active { display: block; }
+/* tabs */
+.tabs input[type=radio]{display:none}
+.tabs{background:#fff;border-bottom:2px solid #ecdcc8}
+.tab-labels{display:flex}
+.tab-labels label{flex:1;text-align:center;padding:12px 6px;font-family:Arial,sans-serif;font-size:13px;color:#7a5c3a;cursor:pointer;border-bottom:3px solid transparent}
+#t1:checked~.tab-labels label[for=t1],#t2:checked~.tab-labels label[for=t2],
+#t3:checked~.tab-labels label[for=t3],#t4:checked~.tab-labels label[for=t4]{color:#8b2500;border-bottom-color:#8b2500;font-weight:bold}
+.panels{max-width:600px;margin:0 auto}
+.panel{display:none;padding:16px}
+#t1:checked~.panels #p1,#t2:checked~.panels #p2,
+#t3:checked~.panels #p3,#t4:checked~.panels #p4{display:block}
 
-  .tip { background: #fff3e0; border-left: 3px solid #e07b00; padding: 10px 12px; border-radius: 0 6px 6px 0; margin-bottom: 16px; font-family: Arial, sans-serif; font-size: 13px; color: #5a3500; }
+.tip{background:#fff3e0;border-left:3px solid #e07b00;padding:10px 12px;border-radius:0 6px 6px 0;margin-bottom:16px;font-family:Arial,sans-serif;font-size:13px;color:#5a3500}
+.day{margin-bottom:20px}
+.day-label{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8b2500;margin-bottom:8px;font-weight:bold}
+.step{display:flex;gap:10px;margin-bottom:5px;background:#fff;border-radius:8px;padding:9px 12px;border:1px solid #ecdcc8}
+.step-time{font-family:Arial,sans-serif;font-size:11px;color:#b05000;min-width:56px;padding-top:2px;font-weight:bold;flex-shrink:0}
+.step-name{font-size:14px;color:#2c1a0e}
+.step-detail{font-family:Arial,sans-serif;font-size:12px;color:#7a5c3a;margin-top:2px}
 
-  .day { margin-bottom: 22px; }
-  .day-label { font-size: 11px; font-family: Arial, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: #8b2500; margin-bottom: 10px; font-weight: bold; }
-  .step { display: flex; gap: 10px; margin-bottom: 6px; background: #fff; border-radius: 8px; padding: 10px 12px; border: 1px solid #ecdcc8; }
-  .step-time { font-family: Arial, sans-serif; font-size: 11px; color: #b05000; min-width: 56px; padding-top: 2px; font-weight: bold; }
-  .step-name { font-size: 14px; color: #2c1a0e; }
-  .step-detail { font-family: Arial, sans-serif; font-size: 12px; color: #7a5c3a; margin-top: 2px; }
+.sec{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8b2500;margin:16px 0 7px;font-weight:bold}
+.sec:first-child{margin-top:0}
 
-  .section-title { font-family: Arial, sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #8b2500; margin: 18px 0 8px; font-weight: bold; }
-  .section-title:first-child { margin-top: 0; }
+/* place card = full tappable link */
+a.place{display:block;background:#fff;border:1px solid #ecdcc8;border-radius:8px;padding:10px 12px;margin-bottom:5px;text-decoration:none;color:inherit;-webkit-tap-highlight-color:rgba(139,37,0,.08)}
+a.place:active{background:#fdf0e8}
+.place-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.place-name{font-size:14px;color:#2c1a0e}
+.maps-arrow{flex-shrink:0;font-family:Arial,sans-serif;font-size:13px;color:#8b2500;margin-top:1px}
+.place-addr{font-family:Arial,sans-serif;font-size:12px;color:#9a7a5a;margin-top:2px}
+.place-note{font-family:Arial,sans-serif;font-size:12px;color:#b05000;margin-top:3px;font-style:italic}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.badge{font-family:Arial,sans-serif;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:bold}
+.b-trad{background:#fff0d6;color:#7a4000}
+.b-mod{background:#e0f4eb;color:#1a5c38}
+.b-price{background:#fde8e0;color:#8b2500}
+.b-star{background:#fff3b0;color:#6b4a00}
+.b-triana{background:#e8e0fa;color:#3c2080}
+.b-alameda{background:#e0f0d0;color:#2a5010}
 
-  .place { background: #fff; border: 1px solid #ecdcc8; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; }
-  .place-name { font-size: 14px; color: #2c1a0e; }
-  .place-addr { font-family: Arial, sans-serif; font-size: 12px; color: #9a7a5a; margin-top: 2px; }
-  .place-note { font-family: Arial, sans-serif; font-size: 12px; color: #b05000; margin-top: 3px; font-style: italic; }
-  .badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
-  .badge { font-family: Arial, sans-serif; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: bold; }
-  .b-trad { background: #fff0d6; color: #7a4000; }
-  .b-mod  { background: #e0f4eb; color: #1a5c38; }
-  .b-price { background: #fde8e0; color: #8b2500; }
-  .b-star { background: #fff3b0; color: #6b4a00; }
-  .b-triana { background: #e8e0fa; color: #3c2080; }
-  .b-alameda { background: #e0f0d0; color: #2a5010; }
-
-  .sight { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #ecdcc8; }
-  .sight:last-child { border-bottom: none; }
-  .sight-dot { width: 8px; height: 8px; border-radius: 50%; background: #8b2500; margin-top: 5px; flex-shrink: 0; }
-  .sight-name { font-size: 14px; color: #2c1a0e; }
-  .sight-note { font-family: Arial, sans-serif; font-size: 12px; color: #9a7a5a; margin-top: 2px; }
-
-  .legend { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px; background: #fff; border-bottom: 1px solid #ecdcc8; font-family: Arial, sans-serif; font-size: 12px; }
-  .leg-item { display: flex; align-items: center; gap: 5px; color: #5a3c28; }
-  .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+/* sight row = full tappable link */
+a.sight{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #ecdcc8;text-decoration:none;color:inherit;-webkit-tap-highlight-color:rgba(139,37,0,.08)}
+a.sight:last-child{border-bottom:none}
+a.sight:active .sight-name{color:#8b2500}
+.sight-dot{width:8px;height:8px;border-radius:50%;background:#8b2500;margin-top:5px;flex-shrink:0}
+.sight-body{flex:1;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.sight-name{font-size:14px;color:#2c1a0e}
+.sight-note{font-family:Arial,sans-serif;font-size:12px;color:#9a7a5a;margin-top:2px}
 </style>
 </head>
 <body>
-
 <header>
   <h1>Séville — Les spots de Concha</h1>
   <p>Guide de voyage · Jeudi–Dimanche</p>
 </header>
 
-<div id="map"></div>
+<div class="map-wrap">
+  <div id="map"></div>
+  <button class="geo-btn" id="geoBtn" title="Me localiser">📍</button>
+</div>
 
+<div class="toggle-bar" id="toggleBar" onclick="toggleList()">
+  <span id="toggleLabel">Masquer la liste</span>
+  <span class="toggle-arrow up" id="toggleArrow">▼</span>
+</div>
+
+<div id="list-section">
 <div class="legend">
-  <span class="leg-item"><span class="leg-dot" style="background:#c0392b"></span>Tapas trad.</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#27ae60"></span>Moderne</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#8e44ad"></span>Alameda</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#2980b9"></span>Triana</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#e67e22"></span>Terraza</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#d35400"></span>Flamenco</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#7f8c8d"></span>À visiter</span>
+  <span class="li"><span class="ld" style="background:#c0392b"></span>Tapas trad.</span>
+  <span class="li"><span class="ld" style="background:#27ae60"></span>Moderne</span>
+  <span class="li"><span class="ld" style="background:#8e44ad"></span>Alameda</span>
+  <span class="li"><span class="ld" style="background:#2980b9"></span>Triana</span>
+  <span class="li"><span class="ld" style="background:#e67e22"></span>Terraza</span>
+  <span class="li"><span class="ld" style="background:#d35400"></span>Flamenco</span>
+  <span class="li"><span class="ld" style="background:#7f8c8d"></span>À visiter</span>
 </div>
 
-<nav>
-  <button class="active" onclick="showTab('prog',this)">Programme</button>
-  <button onclick="showTab('manger',this)">Manger</button>
-  <button onclick="showTab('sortir',this)">Sortir</button>
-  <button onclick="showTab('voir',this)">Visiter</button>
-</nav>
-
-<div id="prog" class="panel active">
-  <div class="tip">⚠️ Réserve les <strong>Reales Alcázares</strong> en ligne avant le départ — souvent complet !</div>
-
-  <div class="day">
-    <div class="day-label">Jeudi soir — Arrivée</div>
-    <div class="step"><div class="step-time">Arrivée</div><div><div class="step-name">Installation</div><div class="step-detail">Poser les valises, se rafraîchir</div></div></div>
-    <div class="step"><div class="step-time">Apéro</div><div><div class="step-name">El Rinconcillo</div><div class="step-detail">C/Gerona — la plus ancienne taverne de Séville · pavía de bacalao, salmorejo</div></div></div>
-    <div class="step"><div class="step-time">Dîner</div><div><div class="step-name">Bodeguita Romero</div><div class="step-detail">C/Harinas — lomito, pescaito, montadito pringá</div></div></div>
-    <div class="step"><div class="step-time">Nuit</div><div><div class="step-name">Terrasse Paseo Colón</div><div class="step-detail">Kiosko Bombay ou Mercado del Barranco — ambiance bord du Guadalquivir</div></div></div>
+<div class="tabs">
+  <input type="radio" name="tab" id="t1" checked>
+  <input type="radio" name="tab" id="t2">
+  <input type="radio" name="tab" id="t3">
+  <input type="radio" name="tab" id="t4">
+  <div class="tab-labels">
+    <label for="t1">Programme</label>
+    <label for="t2">Manger</label>
+    <label for="t3">Sortir</label>
+    <label for="t4">Visiter</label>
   </div>
+  <div class="panels">
 
-  <div class="day">
-    <div class="day-label">Vendredi — Monuments & Triana</div>
-    <div class="step"><div class="step-time">Matin</div><div><div class="step-name">Reales Alcázares + Catedral + Giralda</div><div class="step-detail">Avant la chaleur — compter 3–4h</div></div></div>
-    <div class="step"><div class="step-time">Déjeuner</div><div><div class="step-name">Bodega Santa Cruz</div><div class="step-detail">C/Rodrigo Caro — montadito de pringá, ensaladilla</div></div></div>
-    <div class="step"><div class="step-time">Après-midi</div><div><div class="step-name">Triana + Calle Betis</div><div class="step-detail">Se balader le long du fleuve</div></div></div>
-    <div class="step"><div class="step-time">Dîner</div><div><div class="step-name">Mariscos Emilio</div><div class="step-detail">C/Génova, Triana — marisco y pescado</div></div></div>
-    <div class="step"><div class="step-time">Soir</div><div><div class="step-name">Flamenquito</div><div class="step-detail">Anselma (C/Pagés del Corro) ou Volapie — ouverture tardive</div></div></div>
+    <div class="panel" id="p1">
+      <div class="tip">⚠️ Réserve les <strong>Reales Alcázares</strong> en ligne avant le départ — souvent complet !</div>
+      <div class="day">
+        <div class="day-label">Jeudi soir — Arrivée</div>
+        <div class="step"><div class="step-time">Apéro</div><div><div class="step-name">El Rinconcillo</div><div class="step-detail">C/Gerona 40 · pavía de bacalao, salmorejo</div></div></div>
+        <div class="step"><div class="step-time">Dîner</div><div><div class="step-name">Bodeguita Romero</div><div class="step-detail">C/Harinas 10 · lomito, pescaito, montadito pringá</div></div></div>
+        <div class="step"><div class="step-time">Nuit</div><div><div class="step-name">Terrasse Paseo Colón</div><div class="step-detail">Kiosko Bombay ou Mercado del Barranco</div></div></div>
+      </div>
+      <div class="day">
+        <div class="day-label">Vendredi — Monuments &amp; Triana</div>
+        <div class="step"><div class="step-time">Matin</div><div><div class="step-name">Reales Alcázares + Catedral + Giralda</div><div class="step-detail">Avant la chaleur · compter 3–4h</div></div></div>
+        <div class="step"><div class="step-time">Déjeuner</div><div><div class="step-name">Bodega Santa Cruz</div><div class="step-detail">C/Rodrigo Caro · montadito de pringá, ensaladilla</div></div></div>
+        <div class="step"><div class="step-time">Après-midi</div><div><div class="step-name">Triana + Calle Betis</div><div class="step-detail">Balade le long du Guadalquivir</div></div></div>
+        <div class="step"><div class="step-time">Dîner</div><div><div class="step-name">Mariscos Emilio</div><div class="step-detail">C/Génova 1, Triana · marisco y pescado</div></div></div>
+        <div class="step"><div class="step-time">Soir</div><div><div class="step-name">Anselma ou Volapie</div><div class="step-detail">Flamenquito · ouverture tardive</div></div></div>
+      </div>
+      <div class="day">
+        <div class="day-label">Samedi — Alameda &amp; moderne</div>
+        <div class="step"><div class="step-time">Matin</div><div><div class="step-name">Plaza de España + Parque Mª Luisa</div><div class="step-detail">Le matin pour éviter la foule</div></div></div>
+        <div class="step"><div class="step-time">Déjeuner</div><div><div class="step-name">Antigua Abacería de San Lorenzo ⭐</div><div class="step-detail">C/Teodosio · très recommandé · demander Ramón</div></div></div>
+        <div class="step"><div class="step-time">Après-midi</div><div><div class="step-name">Barrio Alfalfa + Las Setas</div><div class="step-detail">Vue panoramique depuis la Encarnación</div></div></div>
+        <div class="step"><div class="step-time">Soir</div><div><div class="step-name">Ovejas Negras ou Mamarracha</div><div class="step-detail">C/Hernando Colón · tapas modernes</div></div></div>
+        <div class="step"><div class="step-time">Nuit</div><div><div class="step-name">Los Martinez ou La Piconera</div><div class="step-detail">Flamenquito tardif</div></div></div>
+      </div>
+      <div class="day">
+        <div class="day-label">Dimanche — Départ</div>
+        <div class="step"><div class="step-time">Matin</div><div><div class="step-name">Paseo Río Guadalquivir + Universidad</div><div class="step-detail">Dernière balade tranquille</div></div></div>
+        <div class="step"><div class="step-time">Déjeuner</div><div><div class="step-name">Casa Ricardo</div><div class="step-detail">C/Hernán Cortés 2 · croquetas y tapeito</div></div></div>
+        <div class="step"><div class="step-time">Départ</div><div><div class="step-name">Bon voyage !</div></div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="p2">
+      <div class="sec">Centro — Traditionnels</div>
+      <a class="place" href="https://maps.google.com/?cid=3504562103471860256" target="_blank"><div class="place-top"><div class="place-name">El Rinconcillo</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Gerona 40</div><div class="place-note">Pavía de bacalao · salmorejo</div><div class="badges"><span class="badge b-trad">traditionnel</span><span class="badge b-star">⭐ incontournable</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=12494255203482535145" target="_blank"><div class="place-top"><div class="place-name">Bodeguita Romero</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Harinas 10</div><div class="place-note">Lomito · pescaito · montadito pringá</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=5103975704963194435" target="_blank"><div class="place-top"><div class="place-name">Bodega Antonio Romero</div><span class="maps-arrow">↗</span></div><div class="place-addr">Antonia Díaz 19</div><div class="place-note">Pirirpi · pescaito · carne</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=6741450002211187454" target="_blank"><div class="place-top"><div class="place-name">Barbiana</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Albareda 11</div><div class="place-note">Pescaito · cuchareo</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=5255774528850342695" target="_blank"><div class="place-top"><div class="place-name">Bodega Santa Cruz</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Rodrigo Caro 1</div><div class="place-note">Montadito de pringá · ensaladilla</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=12627313748243555250" target="_blank"><div class="place-top"><div class="place-name">La Flor del Toranzo</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Jimios 1</div><div class="place-note">Montaditos carne mecha manzana y chacinas</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=2772950680227238778" target="_blank"><div class="place-top"><div class="place-name">La Moneda</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Almirantazgo</div><div class="place-note">Marisco y pescado</div><div class="badges"><span class="badge b-trad">traditionnel</span><span class="badge b-price">&gt;30€</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=7673716946953113258" target="_blank"><div class="place-top"><div class="place-name">Casa Morales</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ García de Vinuesa 11</div><div class="place-note">Tapeo</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Bodeguita+Casablanca+Calle+Santander+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Bodeguita Casablanca</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Santander</div><div class="place-note">De todo</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=6809448883730554374" target="_blank"><div class="place-top"><div class="place-name">Becerrita</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Recaredo 9</div><div class="place-note">Ensaladilla · pescado</div><div class="badges"><span class="badge b-trad">traditionnel</span><span class="badge b-price">&gt;30€</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=11728638585806006706" target="_blank"><div class="place-top"><div class="place-name">Taberna del Alabardero</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Zaragoza 20</div><div class="place-note">De todo y arroz</div><div class="badges"><span class="badge b-trad">traditionnel</span><span class="badge b-price">&gt;30€</span></div></a>
+
+      <div class="sec">Centro — Modernes</div>
+      <a class="place" href="https://maps.google.com/?cid=14583278816180872665" target="_blank"><div class="place-top"><div class="place-name">Ovejas Negras</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Hernando Colón 8</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=14718036669650111504" target="_blank"><div class="place-top"><div class="place-name">Mamarracha</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Hernando Colón 1</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=1588308616632686651" target="_blank"><div class="place-top"><div class="place-name">Torres y García</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Harinas 2</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=17431392100065440068" target="_blank"><div class="place-top"><div class="place-name">La Azotea</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Zaragoza 5</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Zelai+Calle+Albareda+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Zelai</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Albareda</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Clorofila+Calle+Santander+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Clorofila</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Santander</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Ignacio+Vidal+Calle+Canalejas+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Ignacio Vidal</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Canalejas</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Pinton+Calle+Francos+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Pintón</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Francos</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Petit+Comite+Calle+2+Mayo+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Petit Comité</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ 2 de Mayo</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Perro+Viejo+Calle+Arguijo+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Perro Viejo</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Arguijo 3</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Lobo+Lopez+Calle+Rosario+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Lobo López</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Rosario 15</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Jaula+de+Papel+Calle+Angostillo+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Jaula de Papel</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Angostillo 8</div><div class="badges"><span class="badge b-mod">moderne</span></div></a>
+
+      <div class="sec">Alameda</div>
+      <a class="place" href="https://maps.google.com/?cid=953049022084526166" target="_blank"><div class="place-top"><div class="place-name">Antigua Abacería de San Lorenzo</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Teodosio 53</div><div class="place-note">Très recommandé · demander Ramón</div><div class="badges"><span class="badge b-alameda">alameda</span><span class="badge b-star">⭐ incontournable</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=9010207790444621468" target="_blank"><div class="place-top"><div class="place-name">Casa Ricardo</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Hernán Cortés 2</div><div class="place-note">Croquetas y tapeito</div><div class="badges"><span class="badge b-alameda">alameda</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=1996590615205546200" target="_blank"><div class="place-top"><div class="place-name">Eslava</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Eslava 3</div><div class="place-note">De todo</div><div class="badges"><span class="badge b-alameda">alameda</span><span class="badge b-price">&gt;30€</span></div></a>
+
+      <div class="sec">Triana</div>
+      <a class="place" href="https://maps.google.com/?cid=7333759291419154608" target="_blank"><div class="place-top"><div class="place-name">Mariscos Emilio</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Génova 1</div><div class="place-note">Marisco y pescado</div><div class="badges"><span class="badge b-triana">triana</span></div></a>
+      <a class="place" href="https://maps.google.com/?q=Cuevas+bar+Calle+Paraiso+Triana+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Cuevas</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Paraiso</div><div class="place-note">De todo</div><div class="badges"><span class="badge b-triana">triana</span></div></a>
+      <a class="place" href="https://maps.google.com/?cid=13114755046019387860" target="_blank"><div class="place-top"><div class="place-name">Pura Tasca</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Numancia 5</div><div class="place-note">Plus moderne · très bien noté</div><div class="badges"><span class="badge b-triana">triana</span><span class="badge b-mod">moderne</span></div></a>
+    </div>
+
+    <div class="panel" id="p3">
+      <div class="sec">Terrazas — bord du Guadalquivir</div>
+      <a class="place" href="https://maps.google.com/?cid=7050325958869154055" target="_blank"><div class="place-top"><div class="place-name">Kiosko Bombay</div><span class="maps-arrow">↗</span></div><div class="place-addr">Paseo Colón</div></a>
+      <a class="place" href="https://maps.google.com/?cid=2948034919079193258" target="_blank"><div class="place-top"><div class="place-name">Mercado del Barranco</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Arjona — marché + terrasse</div></a>
+      <a class="place" href="https://maps.google.com/?q=Manhattan+bar+Paseo+Delicias+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Manhattan</div><span class="maps-arrow">↗</span></div><div class="place-addr">Paseo de las Delicias</div></a>
+      <a class="place" href="https://maps.google.com/?q=Muelle+Nueva+York+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Muelle Nueva York</div><span class="maps-arrow">↗</span></div><div class="place-addr">Paseo de las Delicias</div></a>
+      <a class="place" href="https://maps.google.com/?q=Iguana+Snacks+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Iguana Snack's</div><span class="maps-arrow">↗</span></div><div class="place-addr">Sevilla</div></a>
+
+      <div class="sec">Flamenquito</div>
+      <a class="place" href="https://maps.google.com/?cid=15342799264885517515" target="_blank"><div class="place-top"><div class="place-name">Anselma</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Pagés del Corro 49</div><div class="place-note">Ouverture tardive — vers minuit</div></a>
+      <a class="place" href="https://maps.google.com/?q=Volapie+Virgen+Milagrosa+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Volapie</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Virgen de la Milagrosa</div></a>
+      <a class="place" href="https://maps.google.com/?cid=12810978147039220034" target="_blank"><div class="place-top"><div class="place-name">Los Martinez</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Paraiso</div></a>
+      <a class="place" href="https://maps.google.com/?q=La+Piconera+Calle+Salado+Sevilla" target="_blank"><div class="place-top"><div class="place-name">La Piconera</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Salado</div></a>
+      <a class="place" href="https://maps.google.com/?q=Casa+Matias+Calle+Arfe+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Casa Matías</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Arfe</div></a>
+      <a class="place" href="https://maps.google.com/?q=Bar+Moncloa+Calle+Arfe+Sevilla" target="_blank"><div class="place-top"><div class="place-name">Moncloa</div><span class="maps-arrow">↗</span></div><div class="place-addr">C/ Arfe</div></a>
+    </div>
+
+    <div class="panel" id="p4">
+      <div class="sec">Monuments &amp; quartiers</div>
+      <a class="sight" href="https://maps.google.com/?cid=13450412327761477255" target="_blank"><div class="sight-dot"></div><div class="sight-body"><div><div class="sight-name">Reales Alcázares</div><div class="sight-note">Réserver en ligne absolument !</div></div><span class="maps-arrow">↗</span></div></a>
+      <a class="sight" href="https://maps.google.com/?cid=11335514391378096711" target="_blank"><div class="sight-dot"></div><div class="sight-body"><div><div class="sight-name">Catedral + Giralda</div><div class="sight-note">Vue panoramique depuis le sommet</div></div><span class="maps-arrow">↗</span></div></a>
+      <a class="sight" href="https://maps.google.com/?cid=9882856811052390969" target="_blank"><div class="sight-dot"></div><div class="sight-body"><div><div class="sight-name">Plaza de España</div><div class="sight-note">Mosaïques des provinces espagnoles</div></div><span class="maps-arrow">↗</span></div></a>
+      <a class="sight" href="https://maps.google.com/?cid=7545485340411095106" target="_blank"><div class="sight-dot"></div><div class="sight-body"><div><div class="sight-name">Parque María Luisa</div><div class="sight-note">Souvent couplé à la Plaza de España</div></div><span class="maps-arrow">↗</span></div></a>
+      <a class="sight" href="https://maps.google.com/?q=Calle+Betis+Triana+Sevilla" target="_blank"><div class="sight-dot"></div><div class="sight-body"><div><div class="sight-name">Triana + Calle Betis</div><div class="sight-note">Quartier emblématique</div></div><span class="maps-arrow">↗</span></div></a>
+      <a class="sight" href="https://maps.google.com/?q=Paseo+Colon+Sevilla" target="_blank"><div class="sight-dot"></div><div class="sight-body"><div><div class="sight-name">Paseo Río Guadalquivir</div><div class="sight-note">Promenade en bord de fleuve</div></div><span class="maps-arrow">↗</span></div></a>
+      <a class="sight" href="https://maps.google.com/?cid=13665238956315169476" target="_blank"><div class="sight-dot"></div><div class="sight-body"><div><div class="sight-name">Las Setas — Pl. de la Encarnación</div><div class="sight-note">Architecture moderne · vue panoramique</div></div><span class="maps-arrow">↗</span></div></a>
+      <a class="sight" href="https://maps.google.com/?q=Plaza+Alfalfa+Sevilla" target="_blank"><div class="sight-dot"></div><div class="sight-body"><div><div class="sight-name">Barrio Alfalfa</div><div class="sight-note">Quartier animé, très vivant le soir</div></div><span class="maps-arrow">↗</span></div></a>
+      <a class="sight" href="https://maps.google.com/?q=Universidad+de+Sevilla" target="_blank"><div class="sight-dot"></div><div class="sight-body"><div><div class="sight-name">Universidad de Sevilla</div><div class="sight-note">Ancien palais de tabac</div></div><span class="maps-arrow">↗</span></div></a>
+    </div>
   </div>
-
-  <div class="day">
-    <div class="day-label">Samedi — Alameda & moderne</div>
-    <div class="step"><div class="step-time">Matin</div><div><div class="step-name">Plaza de España + Parque Mª Luisa</div><div class="step-detail">Le matin pour éviter la foule</div></div></div>
-    <div class="step"><div class="step-time">Déjeuner</div><div><div class="step-name">Antigua Abacería de San Lorenzo ⭐</div><div class="step-detail">C/Teodosio — très recommandé par Concha · demander Ramón</div></div></div>
-    <div class="step"><div class="step-time">Après-midi</div><div><div class="step-name">Barrio Alfalfa + Las Setas</div><div class="step-detail">Plaza de la Encarnación — vue panoramique</div></div></div>
-    <div class="step"><div class="step-time">Soir</div><div><div class="step-name">Ovejas Negras ou Mamarracha</div><div class="step-detail">C/Hernando Colón — tapas modernes</div></div></div>
-    <div class="step"><div class="step-time">Nuit</div><div><div class="step-name">Los Martinez ou La Piconera</div><div class="step-detail">Flamenquito tardif</div></div></div>
-  </div>
-
-  <div class="day">
-    <div class="day-label">Dimanche — Dernier tour & départ</div>
-    <div class="step"><div class="step-time">Matin</div><div><div class="step-name">Paseo Río Guadalquivir + Universidad</div><div class="step-detail">Dernière balade tranquille</div></div></div>
-    <div class="step"><div class="step-time">Déjeuner</div><div><div class="step-name">Casa Ricardo</div><div class="step-detail">C/Hernán Cortés, Alameda — croquetas y tapeito</div></div></div>
-    <div class="step"><div class="step-time">Départ</div><div><div class="step-name">Bon voyage !</div><div class="step-detail"></div></div></div>
-  </div>
 </div>
-
-<div id="manger" class="panel">
-  <div class="section-title">Centro — Traditionnels</div>
-  <div class="place"><div class="place-name">El Rinconcillo</div><div class="place-addr">C/ Gerona 40</div><div class="place-note">Pavía de bacalao · salmorejo</div><div class="badges"><span class="badge b-trad">traditionnel</span><span class="badge b-star">⭐ incontournable</span></div></div>
-  <div class="place"><div class="place-name">Bodeguita Romero</div><div class="place-addr">C/ Harinas 10</div><div class="place-note">Lomito · pescaito · montadito pringá</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></div>
-  <div class="place"><div class="place-name">Bodega Antonio Romero</div><div class="place-addr">Antonia Díaz 19</div><div class="place-note">Pirirpi · pescaito · carne</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></div>
-  <div class="place"><div class="place-name">Barbiana</div><div class="place-addr">C/ Albareda 11</div><div class="place-note">Pescaito · cuchareo</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></div>
-  <div class="place"><div class="place-name">Bodega Santa Cruz</div><div class="place-addr">C/ Rodrigo Caro 1</div><div class="place-note">Montadito de pringá · ensaladilla</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></div>
-  <div class="place"><div class="place-name">La Flor del Toranzo</div><div class="place-addr">C/ Jimios 1</div><div class="place-note">Montaditos carne mecha manzana y chacinas</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></div>
-  <div class="place"><div class="place-name">La Moneda</div><div class="place-addr">C/ Almirantazgo</div><div class="place-note">Marisco y pescado</div><div class="badges"><span class="badge b-trad">traditionnel</span><span class="badge b-price">&gt;30€</span></div></div>
-  <div class="place"><div class="place-name">Casa Morales</div><div class="place-addr">C/ García de Vinuesa 11</div><div class="place-note">Tapeo</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></div>
-  <div class="place"><div class="place-name">Bodeguita Casablanca</div><div class="place-addr">C/ Santander</div><div class="place-note">De todo</div><div class="badges"><span class="badge b-trad">traditionnel</span></div></div>
-  <div class="place"><div class="place-name">Becerrita</div><div class="place-addr">C/ Recaredo 9</div><div class="place-note">Ensaladilla · pescado</div><div class="badges"><span class="badge b-trad">traditionnel</span><span class="badge b-price">&gt;30€</span></div></div>
-  <div class="place"><div class="place-name">Taberna del Alabardero</div><div class="place-addr">C/ Zaragoza 20</div><div class="place-note">De todo y arroz</div><div class="badges"><span class="badge b-trad">traditionnel</span><span class="badge b-price">&gt;30€</span></div></div>
-
-  <div class="section-title">Centro — Modernes</div>
-  <div class="place"><div class="place-name">Ovejas Negras</div><div class="place-addr">C/ Hernando Colón 8</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Mamarracha</div><div class="place-addr">C/ Hernando Colón 1</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Torres y García</div><div class="place-addr">C/ Harinas 2</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">La Azotea</div><div class="place-addr">C/ Zaragoza 5</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Zelai</div><div class="place-addr">C/ Albareda</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Clorofila</div><div class="place-addr">C/ Santander</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Ignacio Vidal</div><div class="place-addr">C/ Canalejas</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Pintón</div><div class="place-addr">C/ Francos</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Petit Comité</div><div class="place-addr">C/ 2 de Mayo</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Perro Viejo</div><div class="place-addr">C/ Arguijo 3</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Lobo López</div><div class="place-addr">C/ Rosario 15</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-  <div class="place"><div class="place-name">Jaula de Papel</div><div class="place-addr">C/ Angostillo 8</div><div class="badges"><span class="badge b-mod">moderne</span></div></div>
-
-  <div class="section-title">Alameda</div>
-  <div class="place"><div class="place-name">Antigua Abacería de San Lorenzo</div><div class="place-addr">C/ Teodosio 53</div><div class="place-note">Très recommandé — demander Ramón</div><div class="badges"><span class="badge b-alameda">alameda</span><span class="badge b-star">⭐ incontournable</span></div></div>
-  <div class="place"><div class="place-name">Casa Ricardo</div><div class="place-addr">C/ Hernán Cortés 2</div><div class="place-note">Croquetas y tapeito</div><div class="badges"><span class="badge b-alameda">alameda</span></div></div>
-  <div class="place"><div class="place-name">Eslava</div><div class="place-addr">C/ Eslava 3</div><div class="place-note">De todo</div><div class="badges"><span class="badge b-alameda">alameda</span><span class="badge b-price">&gt;30€</span></div></div>
-
-  <div class="section-title">Triana</div>
-  <div class="place"><div class="place-name">Mariscos Emilio</div><div class="place-addr">C/ Génova 1</div><div class="place-note">Marisco y pescado</div><div class="badges"><span class="badge b-triana">triana</span></div></div>
-  <div class="place"><div class="place-name">Cuevas</div><div class="place-addr">C/ Paraiso</div><div class="place-note">De todo</div><div class="badges"><span class="badge b-triana">triana</span></div></div>
-  <div class="place"><div class="place-name">Pura Tasca</div><div class="place-addr">C/ Numancia 5</div><div class="place-note">Plus moderne · très bien noté</div><div class="badges"><span class="badge b-triana">triana</span><span class="badge b-mod">moderne</span></div></div>
-</div>
-
-<div id="sortir" class="panel">
-  <div class="section-title">Terrazas — bord du Guadalquivir</div>
-  <div class="place"><div class="place-name">Kiosko Bombay</div><div class="place-addr">Paseo Colón</div></div>
-  <div class="place"><div class="place-name">Mercado del Barranco</div><div class="place-addr">C/ Arjona — marché + terrasse</div></div>
-  <div class="place"><div class="place-name">Manhattan</div><div class="place-addr">Paseo de las Delicias</div></div>
-  <div class="place"><div class="place-name">Muelle Nueva York</div><div class="place-addr">Paseo de las Delicias</div></div>
-  <div class="place"><div class="place-name">Paseo Colón</div><div class="place-addr">Promenade en bord de fleuve</div></div>
-
-  <div class="section-title">Flamenquito</div>
-  <div class="place"><div class="place-name">Anselma</div><div class="place-addr">C/ Pagés del Corro 49</div><div class="place-note">Ouverture tardive (vers minuit)</div></div>
-  <div class="place"><div class="place-name">Volapie</div><div class="place-addr">C/ Virgen de la Milagrosa</div></div>
-  <div class="place"><div class="place-name">Los Martinez</div><div class="place-addr">C/ Alfonso XII</div></div>
-  <div class="place"><div class="place-name">La Piconera</div><div class="place-addr">C/ Salado</div></div>
-  <div class="place"><div class="place-name">Casa Matías</div><div class="place-addr">C/ Arfe</div></div>
-  <div class="place"><div class="place-name">Moncloa</div><div class="place-addr">C/ Arfe</div></div>
-</div>
-
-<div id="voir" class="panel">
-  <div class="section-title">Monuments & quartiers</div>
-  <div class="sight"><div class="sight-dot"></div><div><div class="sight-name">Reales Alcázares</div><div class="sight-note">Réserver en ligne absolument !</div></div></div>
-  <div class="sight"><div class="sight-dot"></div><div><div class="sight-name">Catedral + Giralda</div><div class="sight-note">Vue panoramique depuis le sommet</div></div></div>
-  <div class="sight"><div class="sight-dot"></div><div><div class="sight-name">Plaza de España</div><div class="sight-note">Mosaïques des provinces espagnoles</div></div></div>
-  <div class="sight"><div class="sight-dot"></div><div><div class="sight-name">Parque María Luisa</div><div class="sight-note">Parc magnifique, souvent couplé à la Plaza de España</div></div></div>
-  <div class="sight"><div class="sight-dot"></div><div><div class="sight-name">Triana + Calle Betis</div><div class="sight-note">Quartier emblématique — céramiques, bord du fleuve</div></div></div>
-  <div class="sight"><div class="sight-dot"></div><div><div class="sight-name">Paseo Río Guadalquivir</div><div class="sight-note">Promenade en bord de fleuve</div></div></div>
-  <div class="sight"><div class="sight-dot"></div><div><div class="sight-name">Las Setas (Pl. de la Encarnación)</div><div class="sight-note">Architecture moderne · vue panoramique</div></div></div>
-  <div class="sight"><div class="sight-dot"></div><div><div class="sight-name">Barrio Alfalfa</div><div class="sight-note">Quartier animé, très vivant le soir</div></div></div>
-  <div class="sight"><div class="sight-dot"></div><div><div class="sight-name">Universidad de Sevilla</div><div class="sight-note">Ancien palais de tabac — architecture impressionnante</div></div></div>
-</div>
+</div><!-- end list-section -->
 
 <script>
-var map = L.map('map').setView([37.389, -5.994], 14);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors', maxZoom: 19
-}).addTo(map);
+var map=L.map('map',{zoomControl:true}).setView([37.389,-5.994],14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
 
-function dot(color) {
+function dot(color){
   return L.divIcon({
     className:'',
-    html:'<div style="width:12px;height:12px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.4)"></div>',
-    iconSize:[12,12], iconAnchor:[6,6]
+    html:'<div style="width:13px;height:13px;border-radius:50%;background:'+color+';border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)"></div>',
+    iconSize:[13,13],iconAnchor:[6,6],popupAnchor:[0,-10]
   });
 }
 
-var spots = [
-  // Tapas traditionnels — rouge
-  ["El Rinconcillo ⭐",37.3933873,-5.988364,"#c0392b","Tapas trad. · C/Gerona 40\nPavía de bacalao, salmorejo"],
-  ["Bodeguita Romero",37.387083,-5.99567,"#c0392b","Tapas trad. · C/Harinas 10\nLomito, pescaito, montadito pringá"],
-  ["Bodega Antonio Romero",37.3856835,-5.99727,"#c0392b","Tapas trad. · Antonia Díaz 19\nPirirpi, pescaito, carne"],
-  ["Barbiana",37.3894151,-5.9954095,"#c0392b","Tapas trad. · C/Albareda 11\nPescaito, cuchareo"],
-  ["Bodega Santa Cruz",37.386019,-5.990761,"#c0392b","Tapas trad. · C/Rodrigo Caro 1\nMontadito de pringá, ensaladilla"],
-  ["La Flor del Toranzo",37.3876889,-5.995537,"#c0392b","Tapas trad. · C/Jimios 1\nMontaditos carne mecha manzana"],
-  ["La Moneda",37.3835444,-5.9942198,"#c0392b","Tapas trad. · C/Almirantazgo\nMarisco y pescado · >30€"],
-  ["Casa Morales",37.3864703,-5.9946075,"#c0392b","Tapas trad. · C/García de Vinuesa 11\nTapeo"],
-  ["Becerrita",37.3904247,-5.9842474,"#c0392b","Tapas trad. · C/Recaredo 9\nEnsaladilla, pescado · >30€"],
-  ["Taberna del Alabardero",37.3884934,-5.9981048,"#c0392b","Tapas trad. · C/Zaragoza 20\nDe todo y arroz · >30€"],
-  // Modernes — vert
-  ["Torres y García",37.387331,-5.995635,"#27ae60","Moderne · C/Harinas 2"],
-  ["La Azotea",37.3890491,-5.9988674,"#27ae60","Moderne · C/Zaragoza 5"],
-  ["Ovejas Negras",37.3876008,-5.9937179,"#27ae60","Moderne · C/Hernando Colón 8"],
-  ["Mamarracha",37.3879206,-5.9935932,"#27ae60","Moderne · C/Hernando Colón 1"],
-  // Alameda — violet
-  ["Eslava",37.397491,-5.9969382,"#8e44ad","Alameda · C/Eslava 3\nDe todo · >30€"],
-  ["Antigua Abacería de San Lorenzo ⭐",37.39786,-5.99766,"#8e44ad","Alameda · C/Teodosio 53\nTrès recommandé — demander Ramón"],
-  ["Casa Ricardo",37.3975793,-5.995888,"#8e44ad","Alameda · C/Hernán Cortés 2\nCroquetas y tapeito"],
-  // Triana — bleu
-  ["Mariscos Emilio",37.3803172,-5.9988047,"#2980b9","Triana · C/Génova 1\nMarisco y pescado"],
-  ["Anselma (flamenco)",37.38463,-6.0057557,"#d35400","Triana · C/Pagés del Corro 49\nFlamenquito — ouverture vers minuit"],
-  ["Pura Tasca",37.3865999,-6.010212,"#2980b9","Triana · C/Numancia 5\nModerne · très bien noté"],
-  // Terrazas — orange
-  ["Kiosko Bombay",37.3858477,-5.9997982,"#e67e22","Terraza · Paseo Colón"],
-  ["Mercado del Barranco",37.387613,-6.0021578,"#e67e22","Terraza · C/Arjona\nMarché + terrasse bord du fleuve"],
-  // Flamenco — marron
-  ["Los Martinez (flamenco)",37.39302,-5.9986141,"#d35400","Flamenquito · C/Alfonso XII"],
-  // À visiter — gris
-  ["Reales Alcázares ⭐",37.3830519,-5.9902257,"#7f8c8d","À visiter · Réserver en ligne !"],
-  ["Catedral + Giralda",37.3861784,-5.9926137,"#7f8c8d","À visiter · Vue panoramique"],
-  ["Plaza de España",37.3771957,-5.986892,"#7f8c8d","À visiter"],
-  ["Las Setas",37.39327,-5.9917478,"#7f8c8d","À visiter · Pl. de la Encarnación\nVue panoramique"],
-  ["Parque María Luisa",37.3741832,-5.9872231,"#7f8c8d","À visiter"]
+// [nom, lat, lon, couleur, catégorie, note, maps_id]
+var spots=[
+  ["El Rinconcillo",         37.3933873,-5.988364,  "#c0392b","Tapas trad. · C/Gerona 40",           "Pavía de bacalao · salmorejo ⭐","cid=3504562103471860256"],
+  ["Bodeguita Romero",       37.387083, -5.99567,   "#c0392b","Tapas trad. · C/Harinas 10",           "Lomito · pescaito · montadito pringá","cid=12494255203482535145"],
+  ["Bodega Antonio Romero",  37.3856835,-5.99727,   "#c0392b","Tapas trad. · Antonia Díaz 19",        "Pirirpi · pescaito · carne","cid=5103975704963194435"],
+  ["Barbiana",               37.3894151,-5.9954095, "#c0392b","Tapas trad. · C/Albareda 11",          "Pescaito · cuchareo","cid=6741450002211187454"],
+  ["Bodega Santa Cruz",      37.386019, -5.990761,  "#c0392b","Tapas trad. · C/Rodrigo Caro 1",       "Montadito de pringá · ensaladilla","cid=5255774528850342695"],
+  ["La Flor del Toranzo",    37.3876889,-5.995537,  "#c0392b","Tapas trad. · C/Jimios 1",             "Montaditos carne mecha manzana","cid=12627313748243555250"],
+  ["La Moneda",              37.3835444,-5.9942198, "#c0392b","Tapas trad. · C/Almirantazgo",         "Marisco y pescado · >30€","cid=2772950680227238778"],
+  ["Casa Morales",           37.3864703,-5.9946075, "#c0392b","Tapas trad. · C/García de Vinuesa 11", "Tapeo","cid=7673716946953113258"],
+  ["Becerrita",              37.3904247,-5.9842474, "#c0392b","Tapas trad. · C/Recaredo 9",           "Ensaladilla · pescado · >30€","cid=6809448883730554374"],
+  ["Taberna del Alabardero", 37.3884934,-5.9981048, "#c0392b","Tapas trad. · C/Zaragoza 20",          "De todo y arroz · >30€","cid=11728638585806006706"],
+  ["Torres y García",        37.387331, -5.995635,  "#27ae60","Moderne · C/Harinas 2",               "","cid=1588308616632686651"],
+  ["La Azotea",              37.3890491,-5.9988674, "#27ae60","Moderne · C/Zaragoza 5",              "","cid=17431392100065440068"],
+  ["Ovejas Negras",          37.3876008,-5.9937179, "#27ae60","Moderne · C/Hernando Colón 8",        "","cid=14583278816180872665"],
+  ["Mamarracha",             37.3879206,-5.9935932, "#27ae60","Moderne · C/Hernando Colón 1",        "","cid=14718036669650111504"],
+  ["Eslava",                 37.397491, -5.9969382, "#8e44ad","Alameda · C/Eslava 3",               "De todo · >30€","cid=1996590615205546200"],
+  ["Antigua Abacería ⭐",    37.39786,  -5.99766,   "#8e44ad","Alameda · C/Teodosio 53",            "Très recommandé · demander Ramón","cid=953049022084526166"],
+  ["Casa Ricardo",           37.3975793,-5.995888,  "#8e44ad","Alameda · C/Hernán Cortés 2",        "Croquetas y tapeito","cid=9010207790444621468"],
+  ["Mariscos Emilio",        37.3803172,-5.9988047, "#2980b9","Triana · C/Génova 1",                "Marisco y pescado","cid=7333759291419154608"],
+  ["Anselma",                37.38463,  -6.0057557, "#d35400","Flamenco · C/Pagés del Corro 49",    "Ouverture tardive — vers minuit","cid=15342799264885517515"],
+  ["Pura Tasca",             37.3865999,-6.010212,  "#2980b9","Triana · C/Numancia 5",              "Plus moderne · très bien noté","cid=13114755046019387860"],
+  ["Kiosko Bombay",          37.3858477,-5.9997982, "#e67e22","Terraza · Paseo Colón",              "","cid=7050325958869154055"],
+  ["Mercado del Barranco",   37.387613, -6.0021578, "#e67e22","Terraza · C/Arjona",                 "Marché + terrasse bord du fleuve","cid=2948034919079193258"],
+  ["Los Martinez",           37.39302,  -5.9986141, "#d35400","Flamenco · C/Paraiso",              "","cid=12810978147039220034"],
+  ["Reales Alcázares ⭐",    37.3830519,-5.9902257, "#7f8c8d","À visiter",                          "Réserver en ligne !","cid=13450412327761477255"],
+  ["Catedral + Giralda",     37.3861784,-5.9926137, "#7f8c8d","À visiter",                          "Vue panoramique","cid=11335514391378096711"],
+  ["Plaza de España",        37.3771957,-5.986892,  "#7f8c8d","À visiter",                          "","cid=9882856811052390969"],
+  ["Las Setas",              37.39327,  -5.9917478, "#7f8c8d","À visiter · Pl. de la Encarnación",  "Vue panoramique","cid=13665238956315169476"],
+  ["Parque María Luisa",     37.3741832,-5.9872231, "#7f8c8d","À visiter",                          "","cid=7545485340411095106"]
 ];
 
-spots.forEach(function(s) {
-  L.marker([s[1],s[2]], {icon: dot(s[3])})
-    .addTo(map)
-    .bindPopup('<strong>'+s[0]+'</strong><br><span style="font-size:12px;color:#666;white-space:pre-line">'+s[4]+'</span>');
+spots.forEach(function(s){
+  var name=s[0], lat=s[1], lon=s[2], color=s[3], cat=s[4], note=s[5], mid=s[6];
+  var gurl='https://maps.google.com/?'+mid;
+  var noteHtml=note?'<div class="lf-popup-note">'+note+'</div>':'';
+  var html='<a class="popup-link" href="'+gurl+'" target="_blank">'
+    +'<div class="lf-popup-name">'+name+'</div>'
+    +'<div class="lf-popup-cat">'+cat+'</div>'
+    +noteHtml
+    +'<div class="lf-popup-cta">Ouvrir dans Google Maps ↗</div>'
+    +'</a>';
+  L.marker([lat,lon],{icon:dot(color)}).addTo(map).bindPopup(html,{maxWidth:230});
 });
 
-function showTab(id, btn) {
-  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
-  document.querySelectorAll('nav button').forEach(function(b){ b.classList.remove('active'); });
-  document.getElementById(id).classList.add('active');
-  btn.classList.add('active');
+var geoMarker=null;
+document.getElementById('geoBtn').addEventListener('click',function(){
+  if(!navigator.geolocation){alert('Géolocalisation non disponible.');return;}
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude,lon=pos.coords.longitude;
+    if(geoMarker)map.removeLayer(geoMarker);
+    geoMarker=L.circleMarker([lat,lon],{radius:10,fillColor:'#2980b9',color:'#fff',weight:3,fillOpacity:.9})
+      .addTo(map).bindPopup('📍 Vous êtes ici').openPopup();
+    map.setView([lat,lon],16);
+  },function(){alert('Impossible d\'obtenir votre position.');});
+});
+
+var listVisible=true;
+function toggleList(){
+  listVisible=!listVisible;
+  var section=document.getElementById('list-section');
+  var label=document.getElementById('toggleLabel');
+  var arrow=document.getElementById('toggleArrow');
+  var mapEl=document.getElementById('map');
+  if(listVisible){
+    section.classList.remove('hidden');
+    label.textContent='Masquer la liste';
+    arrow.classList.add('up');
+    mapEl.classList.remove('expanded');
+  } else {
+    section.classList.add('hidden');
+    label.textContent='Afficher la liste';
+    arrow.classList.remove('up');
+    mapEl.classList.add('expanded');
+  }
+  setTimeout(function(){ map.invalidateSize(); }, 320);
 }
 </script>
 </body>
