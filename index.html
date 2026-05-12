@@ -294,8 +294,9 @@ function toggleList(){
     section.classList.add('hidden');
     label.textContent='Déplier la liste';
     arrow.textContent='▲';
+    var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     mapEl.style.maxHeight='none';
-    mapEl.style.height=(window.innerHeight - headerH - barH)+'px';
+    mapEl.style.height=(vh - headerH - barH)+'px';
   }
   setTimeout(function(){ map.invalidateSize(); },320);
 }
