@@ -91,11 +91,17 @@ a.sight:active .sight-name{color:#8b2500}
   <p>Guide de voyage · Jeudi–Dimanche</p>
 </header>
 
+<div class="toggle-bar" id="toggleBar" onclick="toggleList()">
+  <span id="toggleLabel">Plier la liste</span>
+  <span class="toggle-arrow" id="toggleArrow">▼</span>
+</div>
+
 <div class="map-wrap">
   <div id="map"></div>
   <button class="geo-btn" id="geoBtn" title="Me localiser">📍</button>
 </div>
 
+<div id="list-section">
 <div class="legend">
   <span class="li"><span class="ld" style="background:#c0392b"></span>Tapas trad.</span>
   <span class="li"><span class="ld" style="background:#27ae60"></span>Moderne</span>
@@ -106,12 +112,6 @@ a.sight:active .sight-name{color:#8b2500}
   <span class="li"><span class="ld" style="background:#7f8c8d"></span>À visiter</span>
 </div>
 
-<div class="toggle-bar" id="toggleBar" onclick="toggleList()">
-  <span id="toggleLabel">Plier la liste</span>
-  <span class="toggle-arrow" id="toggleArrow">▼</span>
-</div>
-
-<div id="list-section">
 <div class="tabs">
   <input type="radio" name="tab" id="t1" checked>
   <input type="radio" name="tab" id="t2">
@@ -282,8 +282,6 @@ function toggleList(){
   var label=document.getElementById('toggleLabel');
   var arrow=document.getElementById('toggleArrow');
   var mapEl=document.getElementById('map');
-  var headerH=document.querySelector('header').offsetHeight;
-  var barH=document.getElementById('toggleBar').offsetHeight;
   if(listVisible){
     section.classList.remove('hidden');
     label.textContent='Plier la liste';
@@ -295,6 +293,8 @@ function toggleList(){
     label.textContent='Déplier la liste';
     arrow.textContent='▲';
     var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    var headerH=document.querySelector('header').offsetHeight;
+    var barH=document.getElementById('toggleBar').offsetHeight;
     mapEl.style.maxHeight='none';
     mapEl.style.height=(vh - headerH - barH)+'px';
   }
